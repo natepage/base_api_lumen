@@ -11,7 +11,7 @@ use App\Transformers\ModelTransformerInterface;
 use Doctrine\Common\Inflector\Inflector;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
 
 class BaseModelManager implements ModelManagerInterface
@@ -25,7 +25,7 @@ class BaseModelManager implements ModelManagerInterface
     /** @var Model */
     protected $model;
 
-    /** @var null|Model|Collection */
+    /** @var null|Model|Collection|Paginator */
     protected $current;
 
     /** @var ModelRepositoryInterface */
@@ -81,12 +81,19 @@ class BaseModelManager implements ModelManagerInterface
     /**
      * Sets current model instance.
      *
-     * @param null|Model|Collection $current
+     * @param null|Model|Collection|Paginator $current
      *
      * @return self
      */
     public function setCurrent($current = null)
     {
+        if (null !== $current && !$this->supports($current)) {
+            throw new ModelManagerException(sprintf(
+                'Type %s not supported by this manager.',
+                gettype($current)
+            ));
+        }
+
         $this->current = $current;
 
         return $this;
@@ -234,45 +241,6 @@ class BaseModelManager implements ModelManagerInterface
     }
 
     /**
-     * Get class name from model object if it defines it. Otherwise returns the default one.
-     *
-     * @param string $object The property name to check
-     *
-     * @return string|null
-     *
-     * @throws ModelManagerException If model defines the property but the class does not exist
-     */
-    protected function getClassFromModel(string $object)
-    {
-        if (property_exists($this->model, $object)) {
-            if (!class_exists($this->model->$object)) {
-                throw new ModelManagerException(sprintf(
-                    'Model %s defines property %s as %s but class does not exist.',
-                    get_class($this->model),
-                    $object,
-                    $this->model->$object
-                ));
-            }
-
-            return $this->model->$object;
-        }
-
-        return $this->defaultObjects[$object];
-    }
-
-    /**
-     * Returns model key based on model class name.
-     *
-     * @return string
-     */
-    protected function determineModelKey()
-    {
-        $class = strtolower((new \ReflectionClass($this->model))->getShortName());
-
-        return Inflector::pluralize($class);
-    }
-
-    /**
      * Validate inputs for a given set of rules.
      *
      * @param array  $inputs The array of inputs to validate
@@ -415,5 +383,82 @@ class BaseModelManager implements ModelManagerInterface
         );
 
         return $this->current;
+    }
+
+    /**
+     * Determine if the object is supported by the manager.
+     *
+     * @param Model|Collection|Paginator $object The object to test
+     *
+     * @throws ModelManagerException If $object parameter is not an object
+     *
+     * @return bool
+     */
+    public function supports($object)
+    {
+        if (!is_object($object)) {
+            throw new ModelManagerException(sprintf(
+                'Parameter passed to %s must be an object, %s given.',
+                __FUNCTION__,
+                gettype($object)
+            ));
+        }
+
+        if ($object instanceof Model) {
+            return get_class($this->model) === get_class($object);
+        }
+
+        if ($object instanceof Collection || $object instanceof Paginator) {
+            $isSupported = true;
+
+            foreach ($object as $model) {
+                if (get_class($this->model) !== get_class($model)) {
+                    $isSupported = false;
+                }
+            }
+
+            return $isSupported;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get class name from model object if it defines it. Otherwise returns the default one.
+     *
+     * @param string $object The property name to check
+     *
+     * @return string|null
+     *
+     * @throws ModelManagerException If model defines the property but the class does not exist
+     */
+    protected function getClassFromModel(string $object)
+    {
+        if (property_exists($this->model, $object)) {
+            if (!class_exists($this->model->$object)) {
+                throw new ModelManagerException(sprintf(
+                    'Model %s defines property %s as %s but class does not exist.',
+                    get_class($this->model),
+                    $object,
+                    $this->model->$object
+                ));
+            }
+
+            return $this->model->$object;
+        }
+
+        return $this->defaultObjects[$object];
+    }
+
+    /**
+     * Returns model key based on model class name.
+     *
+     * @return string
+     */
+    protected function determineModelKey()
+    {
+        $class = strtolower((new \ReflectionClass($this->model))->getShortName());
+
+        return Inflector::pluralize($class);
     }
 }

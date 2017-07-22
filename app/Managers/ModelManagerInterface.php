@@ -8,7 +8,7 @@ use App\Repositories\ModelRepositoryInterface;
 use App\Transformers\ModelTransformerInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
 
 interface ModelManagerInterface
 {
@@ -42,7 +42,7 @@ interface ModelManagerInterface
     /**
      * Sets current model instance.
      *
-     * @param null|Model|Collection $current
+     * @param null|Model|Collection|Paginator $current
      *
      * @return self
      */
@@ -185,4 +185,15 @@ interface ModelManagerInterface
      *                            If model can't be deleted
      */
     public function delete($primaryKeyValue);
+
+    /**
+     * Determine if the object is supported by the manager.
+     *
+     * @param Model|Collection|Paginator $object The object to test
+     *
+     * @throws ModelManagerException If $object parameter is not an object
+     *
+     * @return bool
+     */
+    public function supports($object);
 }
