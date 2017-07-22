@@ -105,8 +105,6 @@ interface ModelManagerInterface
      * Used to retrieve model in database.
      *
      * @return string
-     *
-     * @throws ModelManagerException If model defines a primary key which does not exist in its attributes
      */
     public function getModelPrimaryKey();
 

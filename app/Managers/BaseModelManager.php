@@ -202,8 +202,6 @@ class BaseModelManager implements ModelManagerInterface
      * Used to retrieve model in database.
      *
      * @return string
-     *
-     * @throws ModelManagerException If model defines a primary key which does not exist in its attributes
      */
     public function getModelPrimaryKey()
     {
@@ -211,15 +209,6 @@ class BaseModelManager implements ModelManagerInterface
 
         if ($primaryKey == 'primaryKey' || !property_exists($this->model, $primaryKey)) {
             return self::MODEL_DEFAULT_PRIMARY_KEY;
-        }
-
-        if (!in_array($primaryKey, $this->model->getAttributes())) {
-            throw new ModelManagerException(sprintf(
-                'Model %s defines a primary key as %s = %s, but this key is not defined in model attributes.',
-                get_class($this->model),
-                $primaryKey,
-                $this->model->$primaryKey
-            ));
         }
 
         return $this->model->$primaryKey;
