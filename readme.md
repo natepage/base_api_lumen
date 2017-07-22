@@ -9,7 +9,8 @@ adding public properties directly on your models:
 * **repository (string):** Defines the class of the repository for the given model.
 * **transformer (string):** Defines the class of the transformer for the given model.
 * **key (string):** Defines the key used as a namespace in the generated responses for the given model.
-* **primaryKey (string):** Defines the name of the primary key attribute for the given model.
+* **primaryKey (string):** Defines the name of the primary key attribute for the given model. The value `primaryKey` is 
+skipped to avoid conflicts with Eloquent attribute.
 * **rules (array):** Defines the name of the validation rules attributes for the given model.
 * **limit (int):** Defines the number of elements per page in the paginated response for the given model.
 

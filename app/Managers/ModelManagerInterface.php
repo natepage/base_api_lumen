@@ -15,7 +15,7 @@ interface ModelManagerInterface
     const PROPERTY_REPOSITORY = 'repository';
     const PROPERTY_TRANSFORMER = 'transformer';
     const PROPERTY_MODEL_KEY = 'key';
-    const PROPERTY_MODEL_PRIMARY_KEY = 'primaryKey';
+    const PROPERTY_MODEL_PRIMARY_KEY = 'primary_key';
     const PROPERTY_MODEL_RULES = 'rules';
     const PROPERTY_MODEL_LIMIT = 'limit';
 

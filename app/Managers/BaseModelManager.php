@@ -200,7 +200,9 @@ class BaseModelManager implements ModelManagerInterface
      */
     public function getModelPrimaryKey()
     {
-        if (!property_exists($this->model, $primaryKey = self::PROPERTY_MODEL_PRIMARY_KEY)) {
+        $primaryKey = self::PROPERTY_MODEL_PRIMARY_KEY;
+
+        if ($primaryKey == 'primaryKey' || !property_exists($this->model, $primaryKey)) {
             return self::MODEL_DEFAULT_PRIMARY_KEY;
         }
 
