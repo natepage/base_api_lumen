@@ -114,7 +114,7 @@ class BaseRepository implements ModelRepositoryInterface
     public function getOneByAttributes(array $attributes)
     {
         try {
-            return $this->getByAttributes($attributes)->firstOrFail();
+            return $this->model->where($attributes)->firstOrFail();
         } catch (ModelNotFoundException $e) {
             throw (new BaseErrorException())
                 ->setStatus('404')
@@ -147,7 +147,7 @@ class BaseRepository implements ModelRepositoryInterface
      */
     public function getByAttributes(array $attributes)
     {
-        return $this->model->where($attributes);
+        return $this->model->where($attributes)->get();
     }
 
     /**
