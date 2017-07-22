@@ -8,9 +8,12 @@ use App\Repositories\BaseRepository;
 use App\Repositories\ModelRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Tests\Utils\AssertEloquentModels;
 
 class ModelRepositoryTests extends \TestCase
 {
+    use AssertEloquentModels;
+
     /** @var array */
     protected $user = [
         'name' => 'John Doe',
@@ -51,33 +54,6 @@ class ModelRepositoryTests extends \TestCase
         }
 
         return $users;
-    }
-
-    /**
-     * Assert if two user models are equal.
-     *
-     * @param Model $expected
-     * @param Model $test
-     */
-    protected function assertSameUser(Model $expected, Model $test)
-    {
-        $this->assertInstanceOf(User::class, $test);
-        $this->assertEquals($expected->id, $test->id);
-    }
-
-    /**
-     * Assert equals on collection.
-     *
-     * @param Collection $collection
-     * @param array      $attributes
-     */
-    protected function assertMultipleEquals(Collection $collection, array $attributes)
-    {
-        $collection->each(function(Model $model) use ($attributes) {
-            foreach ($attributes as $attribute => $expected) {
-                $this->assertEquals($expected, $model->$attribute);
-            }
-        });
     }
 
     /** ------- TESTS ------- */
@@ -152,9 +128,9 @@ class ModelRepositoryTests extends \TestCase
         $byAttribute = $repository->getOneByAttribute('email', $user->email);
         $byAttributes = $repository->getOneByAttributes(['name' => $user->name, 'email' => $user->email]);
 
-        $this->assertSameUser($user, $byId);
-        $this->assertSameUser($user, $byAttribute);
-        $this->assertSameUser($user, $byAttributes);
+        $this->assertSameModel($user, $byId);
+        $this->assertSameModel($user, $byAttribute);
+        $this->assertSameModel($user, $byAttributes);
     }
 
     public function testGetMultipleModelsFunctions()
