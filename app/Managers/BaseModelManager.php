@@ -34,7 +34,7 @@ class BaseModelManager implements ModelManagerInterface
     /** @var ModelTransformerInterface */
     protected $transformer;
 
-    public function __construct(Model $model)
+    public function __construct(Model $model = null)
     {
         $this->model = $model;
     }
