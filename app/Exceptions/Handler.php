@@ -23,6 +23,7 @@ class Handler extends ExceptionHandler
         HttpException::class,
         ModelNotFoundException::class,
         ValidationException::class,
+        ErrorExceptionInterface::class
     ];
 
     /** @var ResponseManagerInterface */

@@ -261,7 +261,9 @@ class BaseModelManager implements ModelManagerInterface
             ));
         }
 
-        if ($setEmpty = empty($rules[$set]) && empty($rules[self::MODEL_DEFAULT_RULES_SET])) {
+        $setEmpty = empty($rules[$set]);
+
+        if ($setEmpty && empty($rules[self::MODEL_DEFAULT_RULES_SET])) {
             throw new ModelManagerException(sprintf(
                 'Rules set %s does not exist and no %s rules set is defined.',
                 $set,
