@@ -92,33 +92,38 @@ class Controller extends BaseController
     {
         $this->modelManager->paginate($request->get(ModelManagerInterface::PROPERTY_MODEL_LIMIT));
         $this->handleIncludesAndExcludes($request);
-        $this->paginate();
+
+        return $this->paginate();
     }
 
     public function show(Request $request, $primaryKey)
     {
         $this->modelManager->show($primaryKey);
         $this->handleIncludesAndExcludes($request);
-        $this->item();
+
+        return $this->item();
     }
 
     public function store(Request $request)
     {
         $this->modelManager->validate($inputs = $request->all(), 'store');
         $this->modelManager->store($inputs);
-        $this->item();
+
+        return $this->item();
     }
 
     public function update(Request $request, $primaryKey)
     {
         $this->modelManager->validate($inputs = $request->all(), 'update');
         $this->modelManager->update($primaryKey, $inputs);
-        $this->item();
+
+        return $this->item();
     }
 
     public function destroy($primaryKey)
     {
         $this->modelManager->delete($primaryKey);
-        $this->item();
+
+        return $this->item();
     }
 }
