@@ -3,9 +3,9 @@
 namespace App\Repositories;
 
 use App\Exceptions\BaseErrorException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Pagination\Paginator;
 
 interface ModelRepositoryInterface
 {
@@ -29,6 +29,8 @@ interface ModelRepositoryInterface
      * Get all models managed by the repository.
      *
      * @return Collection
+     *
+     * @throws BaseErrorException If items not found
      */
     public function all();
 
@@ -37,7 +39,9 @@ interface ModelRepositoryInterface
      *
      * @param int $limit The number of models per page
      *
-     * @return Paginator
+     * @return LengthAwarePaginator
+     *
+     * @throws BaseErrorException If items not found
      */
     public function paginate(int $limit);
 
@@ -82,6 +86,8 @@ interface ModelRepositoryInterface
      * @param mixed  $value     The value of attribute
      *
      * @return Collection
+     *
+     * @throws BaseErrorException If items not found
      */
     public function getByAttribute(string $attribute, $value);
 
@@ -91,6 +97,8 @@ interface ModelRepositoryInterface
      * @param array $attributes The list of attributes as name => value
      *
      * @return Collection
+     *
+     * @throws BaseErrorException If items not found
      */
     public function getByAttributes(array $attributes);
 
@@ -100,6 +108,8 @@ interface ModelRepositoryInterface
      * @param array $inputs The values of the new model
      *
      * @return Model
+     *
+     * @throws BaseErrorException If model not stored
      */
     public function store(array $inputs);
 
@@ -112,6 +122,7 @@ interface ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
+     *                            If model not updated
      */
     public function update(int $id, array $inputs);
 
@@ -125,6 +136,7 @@ interface ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
+     *                            If model not updated
      */
     public function updateByPrimaryKey(string $primaryKey, $value, array $inputs);
 
@@ -136,7 +148,7 @@ interface ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
-     *                            If model can't be deleted
+     *                            If model not deleted
      */
     public function delete(int $id);
 
@@ -149,7 +161,7 @@ interface ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
-     *                            If model can't be deleted
+     *                            If model not deleted
      */
     public function deleteByPrimaryKey(string $primaryKey, $value);
 }

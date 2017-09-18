@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BaseRepository implements ModelRepositoryInterface
 {
@@ -46,10 +47,16 @@ class BaseRepository implements ModelRepositoryInterface
      * Get all models managed by the repository.
      *
      * @return Collection
+     *
+     * @throws BaseErrorException If items not found
      */
     public function all()
     {
-        return $this->model->all();
+        try {
+            return $this->model->all();
+        } catch (Exception $e) {
+            throw $this->errorException('400', '10004', 'Items not found', $e->getMessage());
+        }
     }
 
     /**
@@ -57,11 +64,17 @@ class BaseRepository implements ModelRepositoryInterface
      *
      * @param int $limit The number of models per page
      *
-     * @return Paginator
+     * @return LengthAwarePaginator
+     *
+     * @throws BaseErrorException If items not found
      */
     public function paginate(int $limit)
     {
-        return $this->model->paginate($limit);
+        try {
+            return $this->model->paginate($limit);
+        } catch (Exception $e) {
+            throw $this->errorException('400', '10004', 'Items not found', $e->getMessage());
+        }
     }
 
     /**
@@ -78,12 +91,9 @@ class BaseRepository implements ModelRepositoryInterface
         try {
             return $this->model->findOrFail($id);
         } catch (ModelNotFoundException $e) {
-            throw (new BaseErrorException())
-                ->setStatus('404')
-                ->setInternalCode('10002')
-                ->setTitle('Item not found')
-                ->setDetails(sprintf('Item with id %d does not exist.', $id))
-            ;
+            $details = sprintf('Item with id %d does not exist.', $id);
+
+            throw $this->errorException('404', '10002', 'Item not found', $details);
         }
     }
 
@@ -116,12 +126,9 @@ class BaseRepository implements ModelRepositoryInterface
         try {
             return $this->model->where($attributes)->firstOrFail();
         } catch (ModelNotFoundException $e) {
-            throw (new BaseErrorException())
-                ->setStatus('404')
-                ->setInternalCode('10003')
-                ->setTitle('Item not found')
-                ->setDetails(sprintf('Item with attributes %s does not exist.', json_encode($attributes)))
-            ;
+            $details = sprintf('Item with attributes %s does not exist.', json_encode($attributes));
+
+            throw $this->errorException('404', '10003', 'Items not found', $details);
         }
     }
 
@@ -132,6 +139,8 @@ class BaseRepository implements ModelRepositoryInterface
      * @param mixed  $value     The value of attribute
      *
      * @return Collection
+     *
+     * @throws BaseErrorException If items not found
      */
     public function getByAttribute(string $attribute, $value)
     {
@@ -144,10 +153,18 @@ class BaseRepository implements ModelRepositoryInterface
      * @param array $attributes The list of attributes as name => value
      *
      * @return Collection
+     *
+     * @throws BaseErrorException If items not found
      */
     public function getByAttributes(array $attributes)
     {
-        return $this->model->where($attributes)->get();
+        try {
+            return $this->model->where($attributes)->get();
+        } catch (ModelNotFoundException $e) {
+            $details = sprintf('Items with attributes %s does not exist.', json_encode($attributes));
+
+            throw $this->errorException('404', '10004', 'Items not found', $details);
+        }
     }
 
     /**
@@ -156,10 +173,21 @@ class BaseRepository implements ModelRepositoryInterface
      * @param array $inputs The values of the new model
      *
      * @return Model
+     *
+     * @throws BaseErrorException If model not stored
      */
     public function store(array $inputs)
     {
-        return $this->model->create($inputs);
+        try {
+            return $this->model->create($inputs);
+        } catch (Exception $e) {
+            $details = sprintf('Item with inputs %s could not be stored. %s',
+                json_encode($inputs),
+                $e->getMessage()
+            );
+
+            throw $this->errorException('400', '10005', 'Item not stored', $details);
+        }
     }
 
     /**
@@ -171,11 +199,23 @@ class BaseRepository implements ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
+     *                            If model not updated
      */
     public function update(int $id, array $inputs)
     {
         $updated = $this->getOneById($id);
-        $updated->update($inputs);
+
+        try {
+            $updated->update($inputs);
+        } catch (Exception $e) {
+            $details = sprintf('Item[%d] with inputs %s could not be updated. %s',
+                $id,
+                json_encode($inputs),
+                $e->getMessage()
+            );
+
+            throw $this->errorException('400', '10006', 'Item not updated', $details);
+        }
 
         return $updated;
     }
@@ -190,11 +230,24 @@ class BaseRepository implements ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
+     *                            If model not updated
      */
     public function updateByPrimaryKey(string $primaryKey, $value, array $inputs)
     {
         $updated = $this->getOneByAttribute($primaryKey, $value);
-        $updated->update($inputs);
+
+        try {
+            $updated->update($inputs);
+        } catch (Exception $e) {
+            $details = sprintf('Item[%s=%s] with inputs %s could not be updated. %s',
+                $primaryKey,
+                $value,
+                json_encode($inputs),
+                $e->getMessage()
+            );
+
+            throw $this->errorException('400', '10006', 'Item not updated', $details);
+        }
 
         return $updated;
     }
@@ -207,7 +260,7 @@ class BaseRepository implements ModelRepositoryInterface
      * @return Model
      *
      * @throws BaseErrorException If model not found
-     *                            If model can't be deleted
+     *                            If model not deleted
      */
     public function delete(int $id)
     {
@@ -216,12 +269,7 @@ class BaseRepository implements ModelRepositoryInterface
         try {
             $deleted->delete();
         } catch (Exception $e) {
-            throw (new BaseErrorException())
-                ->setStatus('500')
-                ->setInternalCode('10003')
-                ->setTitle('Item cannot be deleted')
-                ->setDetails($e->getMessage())
-            ;
+            throw $this->errorException('500', '10003', 'Item not deleted', $e->getMessage());
         }
 
         return $deleted;
@@ -235,8 +283,8 @@ class BaseRepository implements ModelRepositoryInterface
      *
      * @return Model
      *
-     * @throws Exception If model can't be deleted
      * @throws BaseErrorException If model not found
+     *                            If model not deleted
      */
     public function deleteByPrimaryKey(string $primaryKey, $value)
     {
@@ -245,14 +293,29 @@ class BaseRepository implements ModelRepositoryInterface
         try {
             $deleted->delete();
         } catch (Exception $e) {
-            throw (new BaseErrorException())
-                ->setStatus('500')
-                ->setInternalCode('10003')
-                ->setTitle('Item cannot be deleted')
-                ->setDetails($e->getMessage())
-            ;
+            throw $this->errorException('500', '10003', 'Item not deleted', $e->getMessage());
         }
 
         return $deleted;
+    }
+
+    /**
+     * Create error exception.
+     *
+     * @param string $status
+     * @param string $internalCode
+     * @param string $title
+     * @param string $details
+     *
+     * @return BaseErrorException
+     */
+    private function errorException(string $status, string $internalCode, string $title, string $details)
+    {
+        return (new BaseErrorException())
+            ->setStatus($status)
+            ->setInternalCode($internalCode)
+            ->setTitle($title)
+            ->setDetails($details)
+            ;
     }
 }
